@@ -1275,7 +1275,7 @@ function renderHeader(){
   document.getElementById('header-title').innerHTML=isK&&proj?`<span>${proj.icon}</span> ${esc(proj.name)}`:`⚡ ${titles[view]||'TaskFlow'}`;
 
   const uw=document.getElementById('user-avatar-wrap');
-  if(currentUser&&!offlineMode){uw.innerHTML=currentUser.photoURL?`<img src="${currentUser.photoURL}" class="user-avatar" alt=""/>`:`<div class="user-avatar-ph">${(currentUser.displayName||'U')[0].toUpperCase()}</div>`;}
+  if(currentUser&&!offlineMode){uw.innerHTML=currentUser.photoURL?`<img src="${currentUser.photoURL}" class="user-avatar" alt="" title="Cerrar sesión" onclick="doSignOut()" style="cursor:pointer"/>`:`<div class="user-avatar-ph" title="Cerrar sesión" onclick="doSignOut()" style="cursor:pointer">${(currentUser.displayName||'U')[0].toUpperCase()}</div>`;}
   else uw.innerHTML='';
   document.getElementById('fab').classList.toggle('hidden',view==='settings'||view==='panorama'||view==='importantes');
 }
