@@ -46,8 +46,8 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .theme-toggle{width:36px;height:20px;border-radius:99px;border:1.5px solid var(--border2);background:var(--bg3);position:relative;cursor:pointer;flex-shrink:0;transition:all .2s;-webkit-tap-highlight-color:transparent}
 .theme-dot{width:13px;height:13px;border-radius:50%;background:var(--text3);position:absolute;top:50%;transform:translateY(-50%);left:2px;transition:all .2s}
 [data-theme="light"] .theme-dot{left:18px;background:var(--accent)}
-.user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--accent)}
-.user-avatar-ph{width:32px;height:32px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent)}
+.user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);cursor:pointer}
+.user-avatar-ph{width:32px;height:32px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer}
 
 /* ── BOTTOM NAV ── */
 .bottom-nav{height:calc(var(--nav-h) + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:stretch;flex-shrink:0;z-index:10}
@@ -1091,6 +1091,10 @@ onAuthStateChanged(auth,async user=>{
   else if(!offlineMode){document.getElementById('loading-screen').style.display='none';document.getElementById('login-screen').style.display='block';}
 });
 
+document.getElementById('user-avatar-wrap').addEventListener('click',()=>{
+  if(window.doSignOut) window.doSignOut();
+});
+
 async function loadFromFS(){
   setSyncStatus('syncing');
   try{
@@ -1275,7 +1279,7 @@ function renderHeader(){
   document.getElementById('header-title').innerHTML=isK&&proj?`<span>${proj.icon}</span> ${esc(proj.name)}`:`⚡ ${titles[view]||'TaskFlow'}`;
 
   const uw=document.getElementById('user-avatar-wrap');
-  if(currentUser&&!offlineMode){uw.innerHTML=currentUser.photoURL?`<img src="${currentUser.photoURL}" class="user-avatar" alt="" title="Cerrar sesión" onclick="doSignOut()" style="cursor:pointer"/>`:`<div class="user-avatar-ph" title="Cerrar sesión" onclick="doSignOut()" style="cursor:pointer">${(currentUser.displayName||'U')[0].toUpperCase()}</div>`;}
+  if(currentUser&&!offlineMode){uw.innerHTML=currentUser.photoURL?`<img src="${currentUser.photoURL}" class="user-avatar" alt=""/>`:`<div class="user-avatar-ph">${(currentUser.displayName||'U')[0].toUpperCase()}</div>`;}
   else uw.innerHTML='';
   document.getElementById('fab').classList.toggle('hidden',view==='settings'||view==='panorama'||view==='importantes');
 }
