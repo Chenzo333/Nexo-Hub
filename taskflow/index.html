@@ -46,16 +46,8 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .theme-toggle{width:36px;height:20px;border-radius:99px;border:1.5px solid var(--border2);background:var(--bg3);position:relative;cursor:pointer;flex-shrink:0;transition:all .2s;-webkit-tap-highlight-color:transparent}
 .theme-dot{width:13px;height:13px;border-radius:50%;background:var(--text3);position:absolute;top:50%;transform:translateY(-50%);left:2px;transition:all .2s}
 [data-theme="light"] .theme-dot{left:18px;background:var(--accent)}
-.user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);cursor:pointer}
-.user-avatar-ph{width:32px;height:32px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer}
-.user-menu-pop{position:fixed;z-index:2000;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;box-shadow:var(--shadow-lg);min-width:220px;overflow:hidden;animation:fadeIn .12s ease}
-.user-menu-info{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
-.user-menu-info img{width:36px;height:36px;border-radius:50%;border:2px solid var(--accent);flex-shrink:0}
-.user-menu-info-ph{width:36px;height:36px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--accent);flex-shrink:0}
-.user-menu-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.user-menu-email{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.user-menu-btn{display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;border:none;background:none;color:var(--c-over);font-size:13px;font-weight:600;cursor:pointer;text-align:left;font-family:inherit;transition:background .12s}
-.user-menu-btn:hover{background:var(--c-over-dim)}
+.user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--accent)}
+.user-avatar-ph{width:32px;height:32px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent)}
 
 /* ── BOTTOM NAV ── */
 .bottom-nav{height:calc(var(--nav-h) + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:stretch;flex-shrink:0;z-index:10}
@@ -1283,7 +1275,7 @@ function renderHeader(){
   document.getElementById('header-title').innerHTML=isK&&proj?`<span>${proj.icon}</span> ${esc(proj.name)}`:`⚡ ${titles[view]||'TaskFlow'}`;
 
   const uw=document.getElementById('user-avatar-wrap');
-  if(currentUser&&!offlineMode){uw.innerHTML=currentUser.photoURL?`<img src="${currentUser.photoURL}" class="user-avatar" alt="" onclick="toggleUserMenu(event)"/>`:`<div class="user-avatar-ph" onclick="toggleUserMenu(event)">${(currentUser.displayName||'U')[0].toUpperCase()}</div>`;}
+  if(currentUser&&!offlineMode){uw.innerHTML=currentUser.photoURL?`<img src="${currentUser.photoURL}" class="user-avatar" alt=""/>`:`<div class="user-avatar-ph">${(currentUser.displayName||'U')[0].toUpperCase()}</div>`;}
   else uw.innerHTML='';
   document.getElementById('fab').classList.toggle('hidden',view==='settings'||view==='panorama'||view==='importantes');
 }
@@ -2109,27 +2101,7 @@ function renderSettings(){
   return h+'</div>';
 }
 
-window.doSignOut=async()=>{document.querySelector('.user-menu-pop')?.remove();await signOut(auth);currentUser=null;document.getElementById('app').style.display='none';document.getElementById('login-screen').style.display='block';};
-
-window.toggleUserMenu=function(e){
-  e.stopPropagation();
-  const existing=document.querySelector('.user-menu-pop');
-  if(existing){existing.remove();return;}
-  const u=currentUser;if(!u)return;
-  const pop=document.createElement('div');
-  pop.className='user-menu-pop';
-  const avatarHTML=u.photoURL?`<img src="${u.photoURL}" alt=""/>`:`<div class="user-menu-info-ph">${(u.displayName||'U')[0].toUpperCase()}</div>`;
-  pop.innerHTML=`<div class="user-menu-info">${avatarHTML}<div style="min-width:0"><div class="user-menu-name">${u.displayName||''}</div><div class="user-menu-email">${u.email||''}</div></div></div><button class="user-menu-btn" onclick="doSignOut()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Cerrar sesión</button>`;
-  const rect=e.currentTarget.getBoundingClientRect();
-  const spaceBelow=window.innerHeight-rect.bottom;
-  const popH=100;
-  if(spaceBelow>popH){pop.style.top=(rect.bottom+8)+'px';}else{pop.style.bottom=(window.innerHeight-rect.top+8)+'px';}
-  const rightEdge=rect.right;
-  const popW=220;
-  pop.style.right=Math.max(8,window.innerWidth-rightEdge)+'px';
-  document.body.appendChild(pop);
-  setTimeout(()=>document.addEventListener('click',()=>document.querySelector('.user-menu-pop')?.remove(),{once:true}),0);
-};
+window.doSignOut=async()=>{if(!confirm('¿Cerrar sesión?'))return;await signOut(auth);currentUser=null;document.getElementById('app').style.display='none';document.getElementById('login-screen').style.display='block';};
 
 // Expose globals for non-module scripts
 window.palDot=palDot;window.esc=esc;window.TODAY=TODAY;
@@ -2272,6 +2244,8 @@ window.openAssignBlock=(tid)=>{
 window.assignToBlock=async(tid,block)=>{
   const today=window.TODAY||new Date().toISOString().slice(0,10);
   const dateStr=window._assignDate||today;
+  const task=S.tasks.find(t=>t.id===tid);
+  if(task&&task.date&&task.date<today)task.date=today;
   if(!S.planDias)S.planDias={};
   if(!S.planDias[dateStr])S.planDias[dateStr]={manana:[],tarde:[],noche:[]};
   ['manana','tarde','noche'].forEach(b=>{S.planDias[dateStr][b]=(S.planDias[dateStr][b]||[]).filter(x=>x!==tid);});
@@ -2542,7 +2516,7 @@ function renderDesktopSidebar(){
     </div>
     <div class="dsb-footer">
       <button class="dsb-new-task-btn" onclick="openT()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nueva tarea</button>
-      ${u&&!offlineMode?`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer" onclick="toggleUserMenu(event)" title="Cuenta">${u.photoURL?`<img src="${u.photoURL}" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--accent)" alt=""/>`:'<span style="font-size:20px">👤</span>'}<span style="font-size:13px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.displayName||u.email||'')}</span></div>`:''}
+      ${u&&!offlineMode?`<div style="display:flex;align-items:center;gap:8px;padding:8px 0">${u.photoURL?`<img src="${u.photoURL}" style="width:28px;height:28px;border-radius:50%" alt=""/>`:'<span style="font-size:20px">👤</span>'}<span style="font-size:13px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.displayName||u.email||'')}</span></div>`:''}
 
       <div class="dsb-sync"><div class="sync-dot" id="sync-dot-dsb"></div><span>Sincronizado</span></div>
     </div>`;
