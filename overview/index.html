@@ -91,6 +91,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 
 /* punto 9: tooltip descripción */
 .band-tooltip{position:fixed;background:#1a1917;color:#fff;font-size:11px;padding:6px 10px;border-radius:7px;pointer-events:none;z-index:999;max-width:220px;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,.2);display:none}
+.band{touch-action:none}
+.band.band-dragging{z-index:60!important;box-shadow:0 4px 14px rgba(0,0,0,.22)}
+.band.drag-over{outline:2px dashed currentColor;outline-offset:1px}
 
 /* ── MODAL ── */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.22);z-index:200;align-items:center;justify-content:center}
@@ -180,6 +183,27 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .add-area-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 10px;border:1.5px dashed var(--border-md);border-radius:10px;background:transparent;font-family:var(--font);font-size:12px;color:var(--t2);cursor:pointer;transition:all .12s;width:100%}
 .add-area-btn:hover{border-color:var(--t2);color:var(--t1);background:var(--bg)}
 
+/* ── PANEL DIARIO (agenda) ── */
+.day-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:250;align-items:stretch;justify-content:flex-end}
+.day-overlay.open{display:flex}
+.day-panel{background:var(--surface);width:360px;max-width:92vw;height:100%;box-shadow:-8px 0 32px rgba(0,0,0,.12);display:flex;flex-direction:column;padding:18px;gap:12px;overflow-y:auto}
+.day-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.day-panel-date{font-size:16px;font-weight:600;color:var(--t1);text-transform:capitalize}
+.day-panel-sub{font-size:11px;color:var(--t3);margin-top:2px}
+.day-panel-list{display:flex;flex-direction:column;gap:6px;flex:1}
+.day-panel-empty{font-size:12px;color:var(--t3);padding:14px 0;text-align:center}
+.day-panel-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;cursor:pointer;border-left:3px solid transparent;transition:background .12s}
+.day-panel-item:hover{background:var(--bg)}
+.day-panel-item-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.day-panel-item-name{flex:1;font-size:12.5px;font-weight:500;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.day-panel-item-time{font-size:10.5px;color:var(--t3);flex-shrink:0;font-family:var(--mono)}
+.day-panel-add{padding:10px;border:1.5px dashed var(--border-md);border-radius:10px;background:transparent;font-family:var(--font);font-size:12.5px;font-weight:500;color:var(--t2);cursor:pointer;transition:all .12s}
+.day-panel-add:hover{border-color:var(--t2);color:var(--t1);background:var(--bg)}
+@media (max-width:767px){
+  .day-overlay{align-items:flex-end!important}
+  .day-panel{width:100%!important;height:auto!important;max-height:78dvh!important;border-radius:18px 18px 0 0!important;padding:16px!important;box-shadow:0 -8px 32px rgba(0,0,0,.18)!important}
+}
+
 
 .mobile-area-strip{display:none}.leg-item{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:6px 10px;font-size:11px;font-weight:600;white-space:nowrap}.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 /* ── MOBILE RESTORE PATCH: real mobile layout without desktop compression ── */
@@ -204,10 +228,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 /* OVERVIEW FIX: vista mensual móvil panorámica con barras reales */
 @media (max-width:767px){
   html,body{overflow-x:hidden!important;background:var(--bg)}
-  header{position:sticky;top:0;z-index:120;padding:6px 12px 5px!important;gap:4px!important}
-  .logo{justify-content:center;width:100%}.logo img{height:24px!important;max-width:122px!important}
-  .hdr-r{justify-content:center!important}.zoom-bar{max-width:330px;width:100%;justify-content:center}.z-btn{padding:5px 11px!important;font-size:11px!important}
-  .nav{grid-template-columns:max-content 1fr max-content!important;gap:8px!important}.month-nav{justify-self:center!important;gap:8px!important}.month-lbl{font-size:15px!important;min-width:110px!important}.ico-btn{width:34px!important;height:34px!important}
+  header{position:sticky!important;top:0!important;z-index:120!important;height:auto!important;padding:8px 12px 6px!important;display:flex!important;flex-direction:column!important;gap:6px!important}
+  .logo{position:static!important;justify-content:center!important;width:100%!important;order:1!important}.logo img{height:24px!important;max-width:122px!important}
+  .month-nav{position:static!important;left:auto!important;top:auto!important;transform:none!important;justify-content:center!important;order:2!important;gap:8px!important}
+  .month-lbl{font-size:15px!important;min-width:110px!important}.ico-btn{width:34px!important;height:34px!important}
+  .hdr-r{position:static!important;justify-content:center!important;flex-wrap:wrap!important;order:3!important;width:100%!important}
+  .zoom-bar{max-width:330px;width:100%;justify-content:center}.z-btn{padding:5px 11px!important;font-size:11px!important}
   .areas-btn,.login-btn{height:32px!important;font-size:11px!important;padding:0 10px!important}.avatar-btn{width:30px!important;height:30px!important}
   .cal-wrap{padding:8px 7px 18px!important;min-height:calc(100dvh - 142px)!important;gap:4px!important;overflow:visible!important}
   .day-hdrs,.cal-grid{gap:3px!important}.day-hdr{font-size:9.5px!important;padding:2px 0 3px!important;letter-spacing:.06em!important}
@@ -324,16 +350,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
     </div>
   </div>
 
-  <div class="fg">
-    <div class="flbl">Prioridad manual</div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <button class="ord-btn" id="mOrdUp" title="Subir">↑</button>
-      <span id="mOrdVal" style="font-size:12px;color:var(--t2);min-width:60px;text-align:center">Sin orden</span>
-      <button class="ord-btn" id="mOrdDown" title="Bajar">↓</button>
-    </div>
-    <p class="note">Sin horario, las barras se ordenan por este valor. Con horario, el horario tiene prioridad.</p>
-  </div>
-
   <!-- PERIOD SECTION -->
   <div id="secPeriod">
     <div class="fg">
@@ -431,6 +447,21 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
   </div>
 </div>
 
+<!-- PANEL DIARIO (agenda del día) -->
+<div class="day-overlay" id="dayOverlay">
+  <div class="day-panel" id="dayPanel">
+    <div class="day-panel-head">
+      <div>
+        <div class="day-panel-date" id="dayPanelDate">—</div>
+        <div class="day-panel-sub" id="dayPanelSub"></div>
+      </div>
+      <button class="settings-close" id="dayPanelClose">×</button>
+    </div>
+    <div class="day-panel-list" id="dayPanelList"></div>
+    <button class="day-panel-add" id="dayPanelAdd">＋ Agregar a este día</button>
+  </div>
+</div>
+
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,getRedirectResult,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
@@ -460,7 +491,7 @@ function saveHiddenAreas(){ localStorage.setItem('ov_hidden_areas', JSON.stringi
 // saveAreas definida más abajo junto con loadFromFirestore (con sync a Firestore)
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-let data = {elements:[], nid:1};
+let data = {elements:[], nid:1, dayOrder:{}};
 let currentUser = null;
 let overviewUnsub = null;
 let saveTimeout = null;
@@ -473,11 +504,11 @@ function getLocalData(){
     if(!s) return null;
     const p=JSON.parse(s);
     if(!p || !Array.isArray(p.elements)) return null;
-    return {elements:p.elements||[], nid:p.nid||1};
+    return {elements:p.elements||[], nid:p.nid||1, dayOrder:p.dayOrder||{}};
   }catch(e){ return null; }
 }
 function setLocalData(next){
-  localStorage.setItem('ov3', JSON.stringify({elements:next.elements||[], nid:next.nid||1}));
+  localStorage.setItem('ov3', JSON.stringify({elements:next.elements||[], nid:next.nid||1, dayOrder:next.dayOrder||{}}));
 }
 function cleanForFirestore(value){
   if(Array.isArray(value)) return value.map(cleanForFirestore).filter(v=>v!==undefined);
@@ -497,7 +528,8 @@ function normalizeData(input){
   const elements = raw.map(cleanForFirestore).filter(el=>el && el.id!=null && el.name && el.type);
   const maxId = elements.reduce((m,el)=>Math.max(m, Number(el.id)||0), 0);
   const nid = Math.max(Number(input?.nid)||1, maxId+1);
-  return {elements, nid};
+  const dayOrder = (input && input.dayOrder && typeof input.dayOrder==='object') ? input.dayOrder : {};
+  return { elements, nid, dayOrder };
 }
 /* ═══════════════════════════════════════════════
    FIREBASE — patrón idéntico a TaskFlow
@@ -506,7 +538,7 @@ function normalizeData(input){
 function ovRef(){ return doc(db,'users',currentUser.uid,'overview','data'); }
 
 function buildPayload(){
-  return cleanForFirestore({ elements:data.elements, nid:data.nid, areas:AREAS, updatedAt:Date.now() });
+  return cleanForFirestore({ elements:data.elements, nid:data.nid, dayOrder:data.dayOrder||{}, areas:AREAS, updatedAt:Date.now() });
 }
 
 function extractSnap(snap){
@@ -560,7 +592,7 @@ async function loadFromFirestore(){
         source=legacy.data;
         if(legacy.areas&&legacy.areas.length) AREAS=legacy.areas;
       } else {
-        source=local||{elements:[],nid:1};
+        source=local||{elements:[],nid:1,dayOrder:{}};
       }
       data=normalizeData(source);
       setLocalData(data);
@@ -597,7 +629,7 @@ async function loadFromFirestore(){
   }catch(e){
     console.warn('Overview load error:',e);
     const local=getLocalData();
-    data=local||{elements:[],nid:1};
+    data=local||{elements:[],nid:1,dayOrder:{}};
     render();
   }
 }
@@ -671,14 +703,14 @@ onAuthStateChanged(auth, async user => {
       currentUser = null;
       updateUserUI(null);
       const local = getLocalData();
-      data = local || {elements:[], nid:1};
+      data = local || {elements:[], nid:1, dayOrder:{}};
       render();
     } else {
       // Sesión cerrada activamente (logout) — limpiar
       if(overviewUnsub){ overviewUnsub(); overviewUnsub=null; }
       currentUser = null;
       updateUserUI(null);
-      data = {elements:[], nid:1};
+      data = {elements:[], nid:1, dayOrder:{}};
       render();
     }
   }
@@ -720,7 +752,7 @@ getRedirectResult(auth).then(result => {
 document.getElementById('logoutItem').addEventListener('click', async () => {
   document.getElementById('avatarDropdown').classList.remove('open');
   await signOut(auth);
-  data = {elements:[], nid:1};
+  data = {elements:[], nid:1, dayOrder:{}};
   render();
 });
 
@@ -735,6 +767,37 @@ function ymd(d){
 function fromYmd(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
 function addD(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
 function mon1(d){return (d.getDay()+6)%7;} // 0=Mon
+
+/* ═══════════════════════════════════════════════
+   ORDEN MANUAL POR DÍA (drag and drop)
+   data.dayOrder = { "YYYY-MM-DD|grupo": [id, id, ...] }
+   grupo: "multi" (bandas que duran >1 día) | "single" (todo lo demás)
+   El orden se ancla siempre al día de INICIO visible de la instancia.
+═══════════════════════════════════════════════ */
+function dayOrderKey(dayYmd, group){ return dayYmd+'|'+group; }
+function getDayOrder(dayYmd, group){
+  const k=dayOrderKey(dayYmd,group);
+  const arr=data.dayOrder && data.dayOrder[k];
+  return Array.isArray(arr) ? arr : [];
+}
+function setDayOrder(dayYmd, group, idsInOrder){
+  if(!data.dayOrder) data.dayOrder={};
+  const k=dayOrderKey(dayYmd,group);
+  data.dayOrder[k]=idsInOrder;
+}
+// Ordena un array de instancias {el,...} según el orden guardado para ese día/grupo.
+// Los elementos sin posición guardada van al final, en su orden relativo original (estable).
+function applyDayOrder(insts, dayYmd, group){
+  const order=getDayOrder(dayYmd,group);
+  if(!order.length) return insts;
+  const pos=new Map(order.map((id,i)=>[id,i]));
+  return [...insts].sort((a,b)=>{
+    const pa=pos.has(a.el.id)?pos.get(a.el.id):Infinity;
+    const pb=pos.has(b.el.id)?pos.get(b.el.id):Infinity;
+    if(pa!==pb) return pa-pb;
+    return 0; // estable: conserva orden original (ya viene ordenado por horario/id)
+  });
+}
 
 /* ═══════════════════════════════════════════════
    VIEW STATE
@@ -861,6 +924,85 @@ function expand(el, winS, winE){
    DRAG STATE
 ═══════════════════════════════════════════════ */
 let dragA=null, dragB=null, dragging=false, moved=false, clickedEl=false;
+
+/* ═══════════════════════════════════════════════
+   DRAG & DROP DE BANDAS (reordenar dentro del mismo día+grupo)
+   Funciona igual en PC (mouse) y celular (touch) vía Pointer Events.
+═══════════════════════════════════════════════ */
+let bandDragMoved=false; // evita abrir el modal de edición si hubo arrastre real
+let bandDrag=null; // {elId, day, group, startX, startY, ghost, originBand}
+
+function attachBandDrag(band, isFirst, group){
+  // Solo el primer segmento de una banda multi-fila inicia el drag (representa toda la banda),
+  // y solo si tiene día/grupo asignado (todas las bandas creadas por paintBands lo tienen).
+  if(!isFirst || !group) return;
+  band.addEventListener('pointerdown', ev=>{
+    if(ev.button!=null && ev.button!==0) return; // solo click izq en mouse
+    const day=band.dataset.day, elId=Number(band.dataset.elId);
+    if(!day) return;
+    bandDragMoved=false;
+    const startX=ev.clientX, startY=ev.clientY;
+    let started=false;
+    const wrap=document.getElementById('gridWrap');
+
+    function onMove(mv){
+      const dx=mv.clientX-startX, dy=mv.clientY-startY;
+      if(!started){
+        if(Math.abs(dx)<6 && Math.abs(dy)<6) return; // umbral para distinguir click de drag
+        started=true;
+        bandDragMoved=true;
+        clickedEl=true;
+        band.classList.add('band-dragging');
+        band.style.opacity='0.45';
+      }
+      // Resaltar la banda del mismo día/grupo bajo el puntero (si hay otra)
+      wrap.querySelectorAll('.band.drag-over').forEach(b=>b.classList.remove('drag-over'));
+      const under=document.elementsFromPoint(mv.clientX,mv.clientY)
+        .find(elm=>elm.classList && elm.classList.contains('band') && elm.dataset.day===day && elm.dataset.group===group && elm!==band);
+      if(under) under.classList.add('drag-over');
+    }
+    function onUp(up){
+      document.removeEventListener('pointermove',onMove);
+      document.removeEventListener('pointerup',onUp);
+      band.classList.remove('band-dragging');
+      band.style.opacity='';
+      const overEl=wrap.querySelector('.band.drag-over');
+      if(overEl) overEl.classList.remove('drag-over');
+      if(!started) return;
+
+      if(overEl){
+        const targetId=Number(overEl.dataset.elId);
+        reorderDay(day, group, elId, targetId);
+      }
+      setTimeout(()=>{ clickedEl=false; bandDragMoved=false; },50);
+    }
+    document.addEventListener('pointermove',onMove);
+    document.addEventListener('pointerup',onUp,{once:true});
+  });
+}
+
+// Reordena el array de un día/grupo moviendo elId a la posición de targetId, y persiste.
+function reorderDay(dayYmd, group, elId, targetId){
+  if(elId===targetId) return;
+  // Construir el orden actual visible en pantalla para ese día/grupo
+  const wrap=document.getElementById('gridWrap');
+  const idsInDom=[...wrap.querySelectorAll(`.band[data-day="${dayYmd}"][data-group="${group}"]`)]
+    .map(b=>Number(b.dataset.elId));
+  // de-duplicar preservando orden (una banda multi-día puede tener varios segmentos, pero
+  // solo el primer segmento tiene listener; igual puede aparecer más de una vez si hay overlap)
+  const seen=new Set(); const order=[];
+  idsInDom.forEach(id=>{ if(!seen.has(id)){ seen.add(id); order.push(id); } });
+
+  const fromIdx=order.indexOf(elId);
+  const toIdx=order.indexOf(targetId);
+  if(fromIdx===-1||toIdx===-1) return;
+  order.splice(fromIdx,1);
+  order.splice(toIdx,0,elId);
+
+  setDayOrder(dayYmd, group, order);
+  save();
+  render();
+}
 
 /* ═══════════════════════════════════════════════
    MOBILE INLINE EVENTS
@@ -1007,7 +1149,7 @@ function render(){
       if(clickedEl){ clickedEl=false; dragA=null;dragB=null;moved=false; return; }
       if(!moved){
         dragA=null;dragB=null;
-        openModal({start:dy,end:dy});
+        openDayPanel(dy);
       } else {
         const a=dragA<dragB?dragA:dragB;
         const b=dragA<dragB?dragB:dragA;
@@ -1087,10 +1229,12 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE){
     };
   }
 
-  // slot grid compartido para TODOS los elementos
-  const slotGrid={};
-  function getSlot(idxS,idxE){
-    for(let slot=0;slot<20;slot++){
+  // slots SEPARADOS: las bandas multi-día siempre ocupan los slots superiores;
+  // las single-día empiezan después del último slot multi-día ocupado en su rango.
+  const slotGridMulti={};
+  const slotGridSingle={};
+  function getSlotIn(slotGrid,idxS,idxE,startFrom=0){
+    for(let slot=startFrom;slot<30;slot++){
       let free=true;
       for(let i=idxS;i<=idxE;i++){if((slotGrid[i]||[])[slot]){free=false;break;}}
       if(free){
@@ -1098,13 +1242,24 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE){
         return slot;
       }
     }
-    return 0;
+    return startFrom;
+  }
+  function maxMultiSlot(idxS,idxE){
+    let m=-1;
+    for(let i=idxS;i<=idxE;i++){
+      const col=slotGridMulti[i];
+      if(col){ for(let s=0;s<col.length;s++){ if(col[s]) m=Math.max(m,s); } }
+    }
+    return m;
   }
 
-  function makeBand(x,y,w,col,bg,label,elId,isFirst,isLast,desc,isKeydate,isPast,centerLabel=false){
+  function makeBand(x,y,w,col,bg,label,elId,isFirst,isLast,desc,isKeydate,isPast,centerLabel=false,dayYmd=null,group=null){
     const sc=col+'88';
     const band=document.createElement('div');
     band.className='band'+(isPast?' past':'');
+    band.dataset.elId=elId;
+    if(dayYmd) band.dataset.day=dayYmd;
+    if(group) band.dataset.group=group;
     band.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${BAND_H}px;background:${bg};border-top:1.5px solid ${sc};border-bottom:1.5px solid ${sc};`;
     if(isFirst){band.style.borderLeft=`1.5px solid ${sc}`;band.style.borderTopLeftRadius='4px';band.style.borderBottomLeftRadius='4px';}
     if(isLast){band.style.borderRight=`1.5px solid ${sc}`;band.style.borderTopRightRadius='4px';band.style.borderBottomRightRadius='4px';}
@@ -1129,17 +1284,19 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE){
       band.appendChild(lbl);
     }
     band.addEventListener('mousedown',ev=>{ev.stopPropagation();clickedEl=true;});
-    band.addEventListener('click',ev=>{ev.stopPropagation();openEdit(elId);});
+    band.addEventListener('click',ev=>{ev.stopPropagation();if(!bandDragMoved) openEdit(elId);});
     if(desc){
       band.addEventListener('mouseenter',ev=>showTooltip(ev,desc));
       band.addEventListener('mousemove',ev=>moveTooltip(ev));
       band.addEventListener('mouseleave',hideTooltip);
     }
+    attachBandDrag(band, isFirst, group);
     wrap.appendChild(band);
   }
 
-  // ── 1. Collect all instances with their index range ──
-  const allInsts=[];
+  // ── 1. Collect all instances with their index range, separadas por grupo ──
+  const multiInsts=[];   // periodos que duran más de 1 día visible
+  const singleInsts=[];  // todo lo demás (incluye periodos de 1 solo día)
   const todayY2=ymd(new Date());
 
   data.elements.forEach(el=>{
@@ -1155,92 +1312,103 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE){
         const idxS=ymdIdx[visS], idxE=ymdIdx[visE];
         if(idxS==null||idxE==null)return;
         const isPast=inst.endYmd<todayY2;
-        allInsts.push({el,col,bg,idxS,idxE,type:'period',isPast});
+        const item={el,col,bg,idxS,idxE,type:'period',isPast,anchorYmd:visS};
+        if(idxE>idxS) multiInsts.push(item); else singleInsts.push(item);
       });
     } else if(el.type==='recurrent'){
       days.forEach((day,idx)=>{
         if(day._outMonth) return; // nunca pintar en días fuera del mes
         const dow=day.getDay();
         if(!el.days||!el.days.includes(String(dow)))return;
-        const isPast=ymd(day)<todayY2;
-        allInsts.push({el,col,bg,idxS:idx,idxE:idx,type:'recurrent',isPast});
+        const dY=ymd(day);
+        const isPast=dY<todayY2;
+        singleInsts.push({el,col,bg,idxS:idx,idxE:idx,type:'recurrent',isPast,anchorYmd:dY});
       });
     } else if(el.type==='keydate'){
       expand(el,winS,winE).forEach(inst=>{
         const idx=ymdIdx[inst.startYmd];
         if(idx==null)return;
         const isPast=inst.startYmd<todayY2;
-        allInsts.push({el,col,bg,idxS:idx,idxE:idx,type:'keydate',isPast});
+        singleInsts.push({el,col,bg,idxS:idx,idxE:idx,type:'keydate',isPast,anchorYmd:inst.startYmd});
       });
     }
   });
 
-  // ── 2. Sort by: horario (timeS/hourS), luego orden manual (el.order) ──
-  function sortKey(inst){
+  // ── 2. Orden: dayOrder manual (drag and drop) tiene prioridad; si no hay, por horario ──
+  function fallbackKey(inst){
     const h=inst.el.hourS||inst.el.timeS||'';
-    const o=inst.el.order!=null?inst.el.order:999;
-    return h?h+'_'+String(o).padStart(4,'0'):'zzz_'+String(o).padStart(4,'0');
+    return h?h:'zzz';
   }
-  allInsts.sort((a,b)=>{
-    if(a.idxS!==b.idxS) return a.idxS-b.idxS;
-    return sortKey(a).localeCompare(sortKey(b));
-  });
+  function sortGroup(insts, group){
+    // Agrupar por anchorYmd (cada día se ordena con su propio dayOrder)
+    const byDay={};
+    insts.forEach(inst=>{ (byDay[inst.anchorYmd]=byDay[inst.anchorYmd]||[]).push(inst); });
+    let out=[];
+    Object.keys(byDay).sort().forEach(dY=>{
+      let group_=byDay[dY];
+      group_.sort((a,b)=>fallbackKey(a).localeCompare(fallbackKey(b)));
+      group_=applyDayOrder(group_, dY, group);
+      out=out.concat(group_);
+    });
+    // orden final estable por idxS para que el slot-fill sea predecible left→right
+    return out.sort((a,b)=>a.idxS-b.idxS);
+  }
+  const multiSorted=sortGroup(multiInsts,'multi');
+  const singleSorted=sortGroup(singleInsts,'single');
 
-  // ── 3. Assign slots and draw ──
-  allInsts.forEach(({el,col,bg,idxS,idxE,type,isPast})=>{
-    const slot=getSlot(idxS,idxE);
+  // ── 3. Assign slots (multi primero, ocupa slots de arriba) y draw ──
+  multiSorted.forEach(({el,col,bg,idxS,idxE,isPast,anchorYmd})=>{
+    const slot=getSlotIn(slotGridMulti,idxS,idxE,0);
+    const rowS=Math.floor(idxS/cols), rowE=Math.floor(idxE/cols);
 
-    if(type==='period'){
-      const rowS=Math.floor(idxS/cols), rowE=Math.floor(idxE/cols);
+    const segments=[];
+    for(let row=rowS;row<=rowE;row++){
+      const segS=row===rowS?idxS:row*cols;
+      const segE=row===rowE?idxE:row*cols+cols-1;
+      const colS=segS%cols, colE=segE%cols;
+      const w=(colE-colS+1)*cellW+(colE-colS)*gap;
+      segments.push({row,segS,segE,colS,colE,w});
+    }
+    const widestIdx=segments.reduce((best,s,i)=>s.w>segments[best].w?i:best,0);
 
-      // Pre-calcular el ancho total de cada segmento para encontrar el más ancho
-      // y poner el label centrado en ese segmento
-      const segments=[];
-      for(let row=rowS;row<=rowE;row++){
-        const segS=row===rowS?idxS:row*cols;
-        const segE=row===rowE?idxE:row*cols+cols-1;
-        const colS=segS%cols, colE=segE%cols;
-        const w=(colE-colS+1)*cellW+(colE-colS)*gap;
-        segments.push({row,segS,segE,colS,colE,w});
-      }
-      // Segmento más ancho = donde va el label centrado
-      const widestIdx=segments.reduce((best,s,i)=>s.w>segments[best].w?i:best,0);
-
-      segments.forEach(({row,colS,colE,w},si)=>{
-        const isFirst=(row===rowS), isLast=(row===rowE);
-        const m=segmentMetrics(row,colS,colE);
-        const x=m.x;
-        const y=m.y+BAND_TOP+slot*SLOT_H;
-        w=m.w;
-        const isCenterSeg=(si===widestIdx);
-        let lbl=null;
-        if(isCenterSeg){
-          lbl=mobile ? (el.short||el.name||'').replace(/\s+con\s+.*/i,'').replace(/academia/i,'acad.').slice(0,18) : el.name;
-          if(el.hourS && !mobile) lbl+=` ${el.hourS}`;
-        }
-        makeBand(x,y,w,col,bg,lbl,el.id,isFirst,isLast,el.desc||null,false,isPast,isCenterSeg);
-      });
-    } else {
-      const row=Math.floor(idxS/cols);
-      const colS=idxS%cols;
-      const m=segmentMetrics(row,colS,colS);
+    segments.forEach(({row,colS,colE,w},si)=>{
+      const isFirst=(row===rowS), isLast=(row===rowE);
+      const m=segmentMetrics(row,colS,colE);
       const x=m.x;
       const y=m.y+BAND_TOP+slot*SLOT_H;
-      const w=m.w;
-      let label=mobile ? (el.short||el.name||'').replace(/\s+con\s+.*/i,'').replace(/academia/i,'acad.').slice(0,14) : el.name;
-      const hs=el.hourS||el.timeS;
-      const he=el.hourE||el.timeE;
-      if(hs && !mobile) label+=' '+hs;
-      if(he && !mobile) label+='–'+he;
-      makeBand(x,y,w,col,bg,label,el.id,true,true,el.desc||null,type==='keydate',isPast);
-    }
+      w=m.w;
+      const isCenterSeg=(si===widestIdx);
+      let lbl=null;
+      if(isCenterSeg){
+        lbl=mobile ? (el.short||el.name||'').replace(/\s+con\s+.*/i,'').replace(/academia/i,'acad.').slice(0,18) : el.name;
+        if(el.hourS && !mobile) lbl+=` ${el.hourS}`;
+      }
+      makeBand(x,y,w,col,bg,lbl,el.id,isFirst,isLast,el.desc||null,false,isPast,isCenterSeg,anchorYmd,'multi');
+    });
+  });
+
+  singleSorted.forEach(({el,col,bg,idxS,idxE,type,isPast,anchorYmd})=>{
+    const baseSlot=maxMultiSlot(idxS,idxE)+1;
+    const slot=getSlotIn(slotGridSingle,idxS,idxE,baseSlot);
+    const row=Math.floor(idxS/cols);
+    const colS=idxS%cols;
+    const m=segmentMetrics(row,colS,colS);
+    const x=m.x;
+    const y=m.y+BAND_TOP+slot*SLOT_H;
+    const w=m.w;
+    let label=mobile ? (el.short||el.name||'').replace(/\s+con\s+.*/i,'').replace(/academia/i,'acad.').slice(0,14) : el.name;
+    const hs=el.hourS||el.timeS;
+    const he=el.hourE||el.timeE;
+    if(hs && !mobile) label+=' '+hs;
+    if(he && !mobile) label+='–'+he;
+    makeBand(x,y,w,col,bg,label,el.id,true,true,el.desc||null,type==='keydate',isPast,false,anchorYmd,'single');
   });
 }
 
 /* ═══════════════════════════════════════════════
    MODAL
 ═══════════════════════════════════════════════ */
-let mType='period', mArea=AREAS[0]?.id||'trading', mDays=[], mEditId=null, mColor=null, mOrder=null;
+let mType='period', mArea=AREAS[0]?.id||'trading', mDays=[], mEditId=null, mColor=null;
 
 const MODAL_COLORS=[
   '#185FA5','#1A7FC1','#0EA5E9','#06B6D4','#0891B2',
@@ -1274,19 +1442,6 @@ function buildColorRow(){
     row.appendChild(sw);
   });
 }
-
-function updateOrdDisplay(){
-  const el=document.getElementById('mOrdVal');
-  el.textContent=mOrder!=null?`Prioridad ${mOrder}`:'Sin orden';
-}
-document.getElementById('mOrdUp').addEventListener('click',()=>{
-  mOrder=mOrder!=null?Math.max(1,mOrder-1):1;
-  updateOrdDisplay();
-});
-document.getElementById('mOrdDown').addEventListener('click',()=>{
-  mOrder=mOrder!=null?mOrder+1:1;
-  updateOrdDisplay();
-});
 
 // tooltip
 function showTooltip(ev,text){
@@ -1350,11 +1505,10 @@ function clearModal(){
   document.getElementById('mKRepeat').value='none';
   document.getElementById('mRepeatUntil').value='';
   document.getElementById('mRepeatUntilGrp').classList.add('hide');
-  updateOrdDisplay();
 }
 
 function openModal(range){
-  mEditId=null; mArea=AREAS[0]?.id||'trading'; mColor=null; mOrder=null;
+  mEditId=null; mArea=AREAS[0]?.id||'trading'; mColor=null;
   clearModal();
   if(range){
     document.getElementById('mStart').value=range.start;
@@ -1370,17 +1524,15 @@ function openModal(range){
 
 function openEdit(id){
   const el=data.elements.find(e=>e.id===id); if(!el)return;
-  mEditId=id; mArea=el.area; mColor=null; mOrder=null;
+  mEditId=id; mArea=el.area; mColor=null;
   clearModal();
   // Setear DESPUÉS de clearModal para que no se pise
   mColor=el.color||null;
-  mOrder=el.order!=null?el.order:null;
   mDays=el.days?[...el.days]:[];
   document.getElementById('mName').value=el.name;
   document.getElementById('mDesc').value=el.desc||'';
   document.getElementById('mHourS').value=el.hourS||'';
   document.getElementById('mHourE').value=el.hourE||'';
-  updateOrdDisplay();
   document.getElementById('mTitle').textContent='Editar elemento';
   document.getElementById('mDel').classList.remove('hide');
   if(el.type==='period'){
@@ -1408,6 +1560,102 @@ function closeModal(){
   render();
 }
 
+/* ═══════════════════════════════════════════════
+   PANEL DIARIO (agenda del día)
+   Click corto en un día abre esto. El botón "Agregar" abre el modal
+   de creación ya con la fecha precargada. Click en un ítem → edición.
+═══════════════════════════════════════════════ */
+let dayPanelYmd=null;
+const DOW_NAMES=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+function getDayItems(dayYmd){
+  const dayDate=fromYmd(dayYmd);
+  const items=[];
+  data.elements.forEach(el=>{
+    if(hiddenAreas.has(el.area)) return;
+    const a=AREAS.find(x=>x.id===el.area)||AREAS[0];
+    const col=el.color||a.color;
+    if(el.type==='period'){
+      expand(el,dayDate,dayDate).forEach(inst=>{
+        if(inst.startYmd<=dayYmd && inst.endYmd>=dayYmd) items.push({el,col,type:'period'});
+      });
+    } else if(el.type==='recurrent'){
+      const dow=dayDate.getDay();
+      if(el.days&&el.days.includes(String(dow))) items.push({el,col,type:'recurrent'});
+    } else if(el.type==='keydate'){
+      expand(el,dayDate,dayDate).forEach(inst=>{
+        if(inst.startYmd===dayYmd) items.push({el,col,type:'keydate'});
+      });
+    }
+  });
+  items.sort((a,b)=>{
+    const ha=a.el.hourS||a.el.timeS||'zzz';
+    const hb=b.el.hourS||b.el.timeS||'zzz';
+    return ha.localeCompare(hb);
+  });
+  return items;
+}
+
+function renderDayPanel(){
+  const dayDate=fromYmd(dayPanelYmd);
+  document.getElementById('dayPanelDate').textContent=
+    `${DOW_NAMES[dayDate.getDay()]} ${dayDate.getDate()} de ${MONTHS[dayDate.getMonth()].toLowerCase()}`;
+  const items=getDayItems(dayPanelYmd);
+  document.getElementById('dayPanelSub').textContent=
+    items.length ? `${items.length} elemento${items.length>1?'s':''}` : 'Sin elementos';
+
+  const list=document.getElementById('dayPanelList');
+  list.innerHTML='';
+  if(!items.length){
+    const empty=document.createElement('div');
+    empty.className='day-panel-empty';
+    empty.textContent='No hay nada planificado este día.';
+    list.appendChild(empty);
+    return;
+  }
+  items.forEach(({el,col,type})=>{
+    const row=document.createElement('div');
+    row.className='day-panel-item';
+    row.style.borderLeftColor=col;
+    const dot=document.createElement('div');
+    dot.className='day-panel-item-dot';
+    dot.style.background=col;
+    const name=document.createElement('div');
+    name.className='day-panel-item-name';
+    name.textContent=el.name;
+    row.appendChild(dot);
+    row.appendChild(name);
+    const hs=el.hourS||el.timeS;
+    if(hs){
+      const time=document.createElement('div');
+      time.className='day-panel-item-time';
+      time.textContent=hs;
+      row.appendChild(time);
+    }
+    row.addEventListener('click',()=>{ closeDayPanel(); openEdit(el.id); });
+    list.appendChild(row);
+  });
+}
+
+function openDayPanel(dayYmd){
+  dayPanelYmd=dayYmd;
+  renderDayPanel();
+  document.getElementById('dayOverlay').classList.add('open');
+}
+function closeDayPanel(){
+  document.getElementById('dayOverlay').classList.remove('open');
+  dayPanelYmd=null;
+}
+document.getElementById('dayPanelClose').addEventListener('click',closeDayPanel);
+document.getElementById('dayOverlay').addEventListener('mousedown',e=>{
+  if(e.target===document.getElementById('dayOverlay')) closeDayPanel();
+});
+document.getElementById('dayPanelAdd').addEventListener('click',()=>{
+  const d=dayPanelYmd;
+  closeDayPanel();
+  openModal({start:d,end:d});
+});
+
 document.getElementById('addBtn').addEventListener('click',()=>openModal(null));
 document.getElementById('mCancel').addEventListener('click',closeModal);
 document.getElementById('overlay').addEventListener('click',e=>{if(e.target===document.getElementById('overlay'))closeModal();});
@@ -1430,7 +1678,6 @@ document.getElementById('mSave').addEventListener('click',()=>{
   const hourE=document.getElementById('mHourE').value;
   if(hourS) el.hourS=hourS;
   if(hourE) el.hourE=hourE;
-  if(mOrder!=null) el.order=mOrder;
 
   if(mType==='period'){
     let s=document.getElementById('mStart').value;
@@ -1736,6 +1983,8 @@ body:has(#overlay.open) #nexoFab,
 body:has(#overlay.open) #nexoPanel,
 body:has(#settingsOverlay.open) #nexoFab,
 body:has(#settingsOverlay.open) #nexoPanel,
+body:has(#dayOverlay.open) #nexoFab,
+body:has(#dayOverlay.open) #nexoPanel,
 body:has(#avatarDropdown.open) #nexoFab,
 body:has(#avatarDropdown.open) #nexoPanel{display:none!important}
 </style>
