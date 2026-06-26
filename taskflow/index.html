@@ -377,6 +377,11 @@ input[type=date].inp,input[type=time].inp{color-scheme:dark}
 .block-pills{display:flex;gap:6px}
 .block-pill{flex:1;padding:6px;border-radius:var(--rs);border:1.5px solid var(--border);background:none;color:var(--text3);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px}
 .block-pill.active{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
+.time-sel-wrap{display:flex;gap:4px;align-items:center}
+.time-sel{flex:1;padding:8px 4px;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;font-family:var(--mono);text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;appearance:none;-webkit-appearance:none}
+.time-sel:focus{border-color:var(--accent);outline:none}
+.time-sel-sep{color:var(--text3);font-weight:700;font-size:14px;flex-shrink:0}
+.time-sel option:disabled{color:var(--text3);opacity:.4}
 
 /* ── PRIORITY PILLS ── */
 .ppills{display:flex;gap:8px;flex-wrap:wrap}
@@ -728,7 +733,8 @@ input[type=date].inp,input[type=time].inp{color-scheme:dark}
 .tvt-btn.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .agenda-blocks{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
 .agenda-block{background:var(--bg2);border-radius:16px;overflow:hidden;border:1px solid #d8d6d0;box-shadow:0 2px 8px rgba(0,0,0,.07)}
-.agenda-block-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.agenda-block-hdr{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.agenda-block-hdr-left{display:flex;align-items:center;gap:10px;min-width:0}
 .agenda-block-hdr.hdr-manana{background:#eff6ff;border-bottom-color:#dbeafe}
 .agenda-block-hdr.hdr-tarde{background:#fffbeb;border-bottom-color:#fef3c7}
 .agenda-block-hdr.hdr-noche{background:#f5f3ff;border-bottom-color:#ede9fe}
@@ -886,9 +892,15 @@ input[type=date].inp,input[type=time].inp{color-scheme:dark}
       <div class="date-toggle-row" id="date-quick-row"></div>
       <div class="frow" style="margin-top:6px">
         <div class="f1"><input type="date" class="inp" id="tf-dt" onchange="clearDateQuick()" style="width:100%"/></div>
-        <div class="f1"><input type="time" class="inp" id="tf-h" style="width:100%" onchange="onTimeChange()"/></div>
+        <div class="f1"><div class="time-sel-wrap" id="tf-h-wrap"></div></div>
       </div>
       <div class="block-pills" id="block-pills" style="margin-top:8px"></div>
+      <div id="duration-row" style="margin-top:8px;display:none">
+        <label class="lbl" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" id="tf-dur-chk" style="margin:0;cursor:pointer" onchange="toggleDuration()"/> Agregar hora de fin (duración)
+        </label>
+        <div class="time-sel-wrap" id="tf-h-end-wrap" style="margin-top:6px;display:none"></div>
+      </div>
     </div>
     <div class="fg">
       <label class="lbl">Subtareas</label>
@@ -1011,8 +1023,7 @@ function palBg(k){const p=PALETTE.find(x=>x.k===k)||PALETTE[0];return S.theme===
 function mkCols(){return[{id:'c'+uid(),name:'Pendiente',color:'#9ca3af'},{id:'c'+uid(),name:'En proceso',color:'#f5a623'}];}
 const DONE_COL={id:'done',name:'Completado',color:'#10b981',fixed:true};
 
-// ── BLOQUES DEL DÍA: rangos horarios y clasificación ──
-const BLOCK_RANGES={manana:{min:'00:00',max:'12:59'},tarde:{min:'13:00',max:'19:59'},noche:{min:'20:00',max:'23:59'}};
+// ── BLOQUES DEL DÍA: clasificación por hora ──
 function classifyTimeStr(timeStr){
   if(!timeStr)return null;
   const h=parseInt(timeStr.split(':')[0],10);
@@ -1099,6 +1110,7 @@ function migrateState(){
     if(!t.tags)t.tags=[];
     if(!t.subtasks)t.subtasks=[];
     if(!t.repeatDays)t.repeatDays=[];
+    if(t.timeEnd===undefined)t.timeEnd='';
   });
 }
 
@@ -1543,7 +1555,8 @@ function renderToday(){
         const isOvTask=t.date&&t.date<TODAY&&!tDone;
         const ovCls=isOvTask?' agenda-task-ov':'';
         const doneCls=tDone?' done-task':'';
-        const timeTpl=t.time?('<span class="agenda-task-time'+(isOvTask?' agenda-time-ov':'')+'">'+t.time+'</span>'):'';
+        const timeLbl=t.time?(t.timeEnd?(t.time+' – '+t.timeEnd):t.time):'';
+        const timeTpl=timeLbl?('<span class="agenda-task-time'+(isOvTask?' agenda-time-ov':'')+'">'+timeLbl+'</span>'):'';
         const ovLbl=isOvTask?'<span style="font-size:10px;color:var(--c-over);font-weight:600">Vencida</span>':'';
         const tid=t.id,bk=b.key,ds2=dateStr;
         const checkEl=tDone
@@ -1569,12 +1582,14 @@ function renderToday(){
       }).join(''):'<div class="agenda-block-empty">Sin tareas</div>';
       blocksHTML+=`<div class="agenda-block">
         <div class="agenda-block-hdr hdr-${b.key}">
-          <span class="agenda-block-icon">${b.icon}</span>
-          <span class="agenda-block-name">${b.name}</span>
+          <div class="agenda-block-hdr-left">
+            <span class="agenda-block-icon">${b.icon}</span>
+            <span class="agenda-block-name">${b.name}</span>
+          </div>
           <button class="agenda-block-add-btn" onclick="event.stopPropagation();openT(null,null,'${dateStr}','${b.key}')" title="Agregar tarea en ${b.name}">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
-          <span class="agenda-block-range">${b.range}</span>
+          <span class="agenda-block-range" style="text-align:right">${b.range}</span>
         </div>
         <div class="agenda-block-tasks" 
           ondragover="event.preventDefault()"
@@ -2163,6 +2178,9 @@ window.openTaskDetail=(tid,e)=>{
           <button class="tdm-edit-btn" onclick="closeTaskDetail();openEditT('${tid}')" title="Editar">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
+          <button class="tdm-edit-btn" onclick="closeTaskDetail();delTask('${tid}')" title="Eliminar" style="color:var(--c-over)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
           <button class="tdm-close-btn" onclick="closeTaskDetail()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
@@ -2178,7 +2196,7 @@ window.openTaskDetail=(tid,e)=>{
         <div class="tdm-divider"></div>
         <div class="tdm-chips">
           ${t.date?`<div class="tdm-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${t.date===TODAY?'Hoy':fd(t.date)}</div>`:'<span class="tdm-chip" style="opacity:.5">Sin fecha</span>'}
-          ${t.time?`<div class="tdm-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${t.time}</div>`:''}
+          ${t.time?`<div class="tdm-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${t.time}${t.timeEnd?' – '+t.timeEnd:''}</div>`:''}
           ${t.repeat?`<div class="tdm-chip">↻ ${t.repeat==='daily'?'Diaria':t.repeat==='weekly'?'Semanal':t.repeatDays?.map(d=>['Lu','Ma','Mi','Ju','Vi','Sa','Do'][d]).join(', ')}</div>`:''}
         </div>
         ${tagsHTML?`<div class="tdm-section"><div class="tdm-lbl">Tags</div><div class="tdm-tags">${tagsHTML}</div></div>`:''}
@@ -2576,7 +2594,7 @@ function cardHTML(task,proj,opts={}){
   let dc='';
   if(task.date){const cc=isOv?'cr':isTd?'cb':'';const lb=isTd?'Hoy':isOv?`Vencida ${fd(task.date)}`:fd(task.date);
     dc=`<span class="mc ${cc}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${lb}</span>`;}
-  const tc2=task.time?`<span class="mc"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${task.time}</span>`:'';
+  const tc2=task.time?`<span class="mc"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${task.time}${task.timeEnd?' – '+task.timeEnd:''}</span>`:'';
   const rc=task.repeat?`<span class="mc">${task.repeat==='custom'?'↻ '+formatRepeatDays(task.repeatDays||[]):task.repeat==='daily'?'↻ Diaria':'↻ Semanal'}</span>`:'';
   const mv=opts.mv?`<button class="icon-btn" title="Mover a mañana" onclick="mvTomorrow('${task.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>`:'';
   const pb=opts.sp&&p?`<div class="tc-proj-badge" style="color:${palDot(p.palKey)}">${p.icon} ${esc(p.name)}</div>`:'';
@@ -2955,10 +2973,14 @@ window.openT=(projId,colId,datePreset,blockPreset)=>{
   editTId=null;mStar=false;mPrio='media';mTags=[];mSubtasks=[];mRepeatDays=[];mBlock=blockPreset||'';
   modalDefaultDate=datePreset||'';
   document.getElementById('t-sheet-title').textContent='Nueva tarea';
-  ['tf-t','tf-d','tf-h'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['tf-t','tf-d'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('tf-dt').value=datePreset||'';
   document.getElementById('tf-r').value='';
   document.getElementById('repeat-custom-wrap').style.display='none';
+  renderTimeSel('tf-h-wrap','','onTimeChange()');
+  document.getElementById('duration-row').style.display='none';
+  document.getElementById('tf-dur-chk').checked=false;
+  document.getElementById('tf-h-end-wrap').style.display='none';
   fillProjSel(projId||S.projects[0]?.id);renderStatusSel(colId);renderPrioPills();renderMTags();renderDateQuick(datePreset||'');renderSubtasksModal();renderBlockPills();updStar();
   document.getElementById('t-del-btn').style.display='none';
   document.getElementById('t-overlay').style.display='flex';
@@ -2976,8 +2998,13 @@ window.openEditT=(tid)=>{
   }
   document.getElementById('t-sheet-title').textContent='Editar tarea';
   document.getElementById('tf-t').value=t.title;document.getElementById('tf-d').value=t.description||'';
-  document.getElementById('tf-dt').value=t.date||'';document.getElementById('tf-h').value=t.time||'';
+  document.getElementById('tf-dt').value=t.date||'';
   document.getElementById('tf-r').value=t.repeat||'';
+  renderTimeSel('tf-h-wrap',t.time||'','onTimeChange()');
+  document.getElementById('duration-row').style.display=t.time?'block':'none';
+  document.getElementById('tf-dur-chk').checked=!!t.timeEnd;
+  document.getElementById('tf-h-end-wrap').style.display=t.timeEnd?'flex':'none';
+  if(t.timeEnd)renderTimeSel('tf-h-end-wrap',t.timeEnd,'');
   fillProjSel(t.projectId);renderStatusSel(t.columnId);renderPrioPills();renderMTags();renderDateQuick(t.date||'');renderSubtasksModal();renderBlockPills();updStar();
   document.getElementById('t-del-btn').style.display='flex';
   window.renderRepeatCustom();
@@ -2985,6 +3012,36 @@ window.openEditT=(tid)=>{
   history.pushState({tf:true,modal:'task'},'');
 };
 
+
+// ── SELECTOR CUSTOM DE HORA (reemplaza <input type="time">, se ve igual en iOS/Android/desktop) ──
+function timeSelHTML(wrapId,hh,mm,onChangeFn){
+  const hours=[];for(let h=0;h<24;h++)hours.push(String(h).padStart(2,'0'));
+  const mins=['00','15','30','45'];
+  if(mm&&!mins.includes(mm))mins.push(mm); // preserva minutos no estándar (ej. tareas viejas o de otro origen)
+  mins.sort();
+  const hOpts=hours.map(h=>`<option value="${h}"${h===hh?' selected':''}>${h}</option>`).join('');
+  const mOpts=mins.map(m=>`<option value="${m}"${m===mm?' selected':''}>${m}</option>`).join('');
+  return`<select class="time-sel" id="${wrapId}-hh" onchange="${onChangeFn}">${hOpts}</select>
+    <span class="time-sel-sep">:</span>
+    <select class="time-sel" id="${wrapId}-mm" onchange="${onChangeFn}">${mOpts}</select>`;
+}
+function renderTimeSel(wrapId,value,onChangeFn){
+  const wrap=document.getElementById(wrapId);if(!wrap)return;
+  const[hh,mm]=(value||'').split(':');
+  wrap.innerHTML=timeSelHTML(wrapId,hh||'',mm||'',onChangeFn);
+  // Agregar opción "sin hora" al inicio de horas
+  const hSel=document.getElementById(wrapId+'-hh');
+  if(hSel&&!value){const opt=document.createElement('option');opt.value='';opt.textContent='--';opt.selected=true;hSel.insertBefore(opt,hSel.firstChild);}
+}
+function getTimeSelVal(wrapId){
+  const hSel=document.getElementById(wrapId+'-hh'),mSel=document.getElementById(wrapId+'-mm');
+  if(!hSel||!hSel.value)return'';
+  return hSel.value+':'+(mSel?mSel.value:'00');
+}
+function clearTimeSel(wrapId){
+  const hSel=document.getElementById(wrapId+'-hh');
+  if(hSel){const opt=document.createElement('option');opt.value='';opt.textContent='--';hSel.insertBefore(opt,hSel.firstChild);hSel.value='';}
+}
 
 function renderDateQuick(currentDate){
   const row=document.getElementById('date-quick-row');
@@ -3011,23 +3068,31 @@ window.setMBlock=(b)=>{
   mBlock=mBlock===b?'':b; // tocar de nuevo deselecciona
   renderBlockPills();
   // Si la hora actual no entra en el rango del bloque elegido, la limpiamos
-  const h=document.getElementById('tf-h');
-  if(mBlock&&h.value){
-    const blk=classifyTimeStr(h.value);
-    if(blk!==mBlock)h.value='';
-  }
+  const cur=getTimeSelVal('tf-h-wrap');
+  if(mBlock&&cur&&classifyTimeStr(cur)!==mBlock)clearTimeSel('tf-h-wrap');
 };
 function applyTimeRange(){
-  const h=document.getElementById('tf-h');if(!h)return;
-  if(mBlock&&BLOCK_RANGES[mBlock]){h.min=BLOCK_RANGES[mBlock].min;h.max=BLOCK_RANGES[mBlock].max;}
-  else{h.removeAttribute('min');h.removeAttribute('max');}
+  const hSel=document.getElementById('tf-h-wrap-hh');if(!hSel)return;
+  Array.from(hSel.options).forEach(opt=>{
+    if(!opt.value){opt.disabled=false;return;}
+    opt.disabled=!!(mBlock&&classifyTimeStr(opt.value+':00')!==mBlock);
+  });
 }
 window.onTimeChange=()=>{
-  const h=document.getElementById('tf-h');
-  if(!h.value)return;
+  const val=getTimeSelVal('tf-h-wrap');
+  const durRow=document.getElementById('duration-row');
+  if(durRow)durRow.style.display=val?'block':'none';
+  if(!val){document.getElementById('tf-dur-chk').checked=false;document.getElementById('tf-h-end-wrap').style.display='none';clearTimeSel('tf-h-end-wrap');return;}
   // Si el usuario pone una hora, el bloque se infiere automáticamente
-  const blk=classifyTimeStr(h.value);
+  const blk=classifyTimeStr(val);
   if(blk&&blk!==mBlock){mBlock=blk;renderBlockPills();}
+};
+window.toggleDuration=()=>{
+  const chk=document.getElementById('tf-dur-chk');
+  const wrap=document.getElementById('tf-h-end-wrap');
+  wrap.style.display=chk.checked?'flex':'none';
+  if(chk.checked&&!getTimeSelVal('tf-h-end-wrap'))renderTimeSel('tf-h-end-wrap','','');
+  if(!chk.checked)clearTimeSel('tf-h-end-wrap');
 };
 
 window.renderRepeatCustom=()=>{
@@ -3083,7 +3148,9 @@ window.saveT=()=>{
   const projId=document.getElementById('tf-p').value,colId=document.getElementById('tf-s').value;
   const repeatVal=document.getElementById('tf-r').value;
   const dateVal=document.getElementById('tf-dt').value;
-  const data={title,description:document.getElementById('tf-d').value.trim(),projectId:projId,columnId:colId,date:dateVal,time:document.getElementById('tf-h').value,priority:mPrio,starred:mStar,tags:[...mTags],repeat:repeatVal,repeatDays:[...mRepeatDays],subtasks:[...mSubtasks]};
+  const timeVal=getTimeSelVal('tf-h-wrap');
+  const timeEndVal=document.getElementById('tf-dur-chk').checked?getTimeSelVal('tf-h-end-wrap'):'';
+  const data={title,description:document.getElementById('tf-d').value.trim(),projectId:projId,columnId:colId,date:dateVal,time:timeVal,timeEnd:timeEndVal,priority:mPrio,starred:mStar,tags:[...mTags],repeat:repeatVal,repeatDays:[...mRepeatDays],subtasks:[...mSubtasks]};
   let taskId;
   if(editTId){const t=S.tasks.find(x=>x.id===editTId);if(t)Object.assign(t,data);taskId=editTId;}
   else{const newTask={id:uid(),createdAt:Date.now(),order:S.tasks.filter(t=>t.projectId===projId&&t.columnId===colId).length,...data};S.tasks.push(newTask);taskId=newTask.id;}
@@ -3099,7 +3166,6 @@ window.saveT=()=>{
     const pd=S.planDias[dateVal];
     ['manana','tarde','noche'].forEach(b=>{pd[b]=(pd[b]||[]).filter(x=>x!==taskId);});
     if(mBlock&&pd[mBlock]){
-      const timeVal=data.time;
       let insertAt=pd[mBlock].length;
       if(timeVal){
         for(let i=0;i<pd[mBlock].length;i++){
@@ -4039,7 +4105,7 @@ function renderSemana() {
       var h2 = '<div class="semana-task' + (done?' is-done':'') + '" draggable="true" data-tid="' + t.id + '" data-date="' + dateKey + '" onclick="window.semanaTaskMenu(event,\'' + t.id + '\')">';
       h2 += '<p class="semana-task-title">' + (window.esc ? window.esc(t.title) : t.title) + '</p>';
       h2 += '<div class="semana-task-meta">';
-      if (t.time) h2 += '<span class="semana-task-time">' + t.time + '</span>';
+      if (t.time) h2 += '<span class="semana-task-time">' + t.time + (t.timeEnd?' – '+t.timeEnd:'') + '</span>';
       if (proj) h2 += '<span class="semana-task-proj">' + proj.icon + ' ' + (window.esc ? window.esc(proj.name) : proj.name) + '</span>';
       h2 += '</div></div>';
       return h2;
