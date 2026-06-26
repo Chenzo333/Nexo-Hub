@@ -863,7 +863,10 @@ input[type=date].inp,input[type=time].inp{color-scheme:dark}
   <div class="sheet-handle"></div>
   <div class="sheet-hdr">
     <h2 id="t-sheet-title">Nueva tarea</h2>
-    <button class="icon-btn" onclick="closeT()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="icon-btn danger" id="t-del-btn" style="display:none" onclick="delTaskFromModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
+      <button class="icon-btn" onclick="closeT()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
   </div>
   <div class="sheet-body">
     <div class="fg"><div class="title-row">
@@ -910,7 +913,6 @@ input[type=date].inp,input[type=time].inp{color-scheme:dark}
     </div>
   </div>
   <div class="sheet-foot">
-    <button class="icon-btn danger" id="t-del-btn" style="display:none" onclick="delTaskFromModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
     <button class="btn btn-ghost" onclick="closeT()">Cancelar</button>
     <button class="btn btn-primary" onclick="saveT()">Guardar</button>
   </div>
