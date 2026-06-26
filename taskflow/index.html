@@ -374,6 +374,9 @@ input[type=date].inp,input[type=time].inp{color-scheme:dark}
 .date-toggle-row{display:flex;gap:6px;margin-top:4px}
 .date-quick-btn{flex:1;padding:6px;border-radius:var(--rs);border:1.5px solid var(--border);background:none;color:var(--text3);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;text-align:center}
 .date-quick-btn.active{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
+.block-pills{display:flex;gap:6px}
+.block-pill{flex:1;padding:6px;border-radius:var(--rs);border:1.5px solid var(--border);background:none;color:var(--text3);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px}
+.block-pill.active{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
 
 /* ── PRIORITY PILLS ── */
 .ppills{display:flex;gap:8px;flex-wrap:wrap}
@@ -731,6 +734,9 @@ input[type=date].inp,input[type=time].inp{color-scheme:dark}
 .agenda-block-hdr.hdr-noche{background:#f5f3ff;border-bottom-color:#ede9fe}
 .agenda-block-icon{font-size:18px;line-height:1}
 .agenda-block-name{font-size:14px;font-weight:600;color:var(--text);flex:1}
+.agenda-block-add-btn{width:24px;height:24px;border-radius:50%;border:none;background:rgba(0,0,0,.06);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.agenda-block-add-btn:hover{background:var(--accent);color:#fff}
+.agenda-block-add-btn:active{transform:scale(.92)}
 .agenda-block-range{font-size:11px;color:var(--text3)}
 .agenda-block-tasks{padding:8px;display:flex;flex-direction:column;gap:6px;background:#fafaf9}
 .agenda-block-empty{padding:16px;text-align:center;font-size:12px;color:var(--text3);opacity:.45}
@@ -877,8 +883,9 @@ input[type=date].inp,input[type=time].inp{color-scheme:dark}
       <div class="date-toggle-row" id="date-quick-row"></div>
       <div class="frow" style="margin-top:6px">
         <div class="f1"><input type="date" class="inp" id="tf-dt" onchange="clearDateQuick()" style="width:100%"/></div>
-        <div class="f1"><input type="time" class="inp" id="tf-h" style="width:100%"/></div>
+        <div class="f1"><input type="time" class="inp" id="tf-h" style="width:100%" onchange="onTimeChange()"/></div>
       </div>
+      <div class="block-pills" id="block-pills" style="margin-top:8px"></div>
     </div>
     <div class="fg">
       <label class="lbl">Subtareas</label>
@@ -1001,6 +1008,16 @@ function palBg(k){const p=PALETTE.find(x=>x.k===k)||PALETTE[0];return S.theme===
 function mkCols(){return[{id:'c'+uid(),name:'Pendiente',color:'#9ca3af'},{id:'c'+uid(),name:'En proceso',color:'#f5a623'}];}
 const DONE_COL={id:'done',name:'Completado',color:'#10b981',fixed:true};
 
+// ── BLOQUES DEL DÍA: rangos horarios y clasificación ──
+const BLOCK_RANGES={manana:{min:'00:00',max:'12:59'},tarde:{min:'13:00',max:'19:59'},noche:{min:'20:00',max:'23:59'}};
+function classifyTimeStr(timeStr){
+  if(!timeStr)return null;
+  const h=parseInt(timeStr.split(':')[0],10);
+  if(h<13)return'manana';
+  if(h<20)return'tarde';
+  return'noche';
+}
+
 function defData(){
   const c1=mkCols(),c2=mkCols(),c3=mkCols();
   return{
@@ -1022,7 +1039,7 @@ let S=defData();window.S=S;
 let currentUser=null,offlineMode=false,unsubFS=null,saveTimeout=null,isSaving=false,lastSaveTime=0;
 let view='today',prevView=null,kanbanProjId=null;
 let editTId=null,editPId=null;
-let mStar=false,mPrio='media',mTags=[],mSubtasks=[],mRepeatDays=[];
+let mStar=false,mPrio='media',mTags=[],mSubtasks=[],mRepeatDays=[],mBlock='';
 let pIcon='📁',pPalKey='navy';
 let dTask=null,dOverTask=null,dOverPos=null,dProjId=null;
 let todayPage=0; // 0=today, 1=tomorrow
@@ -1467,18 +1484,13 @@ function renderToday(){
       </div>`;
     }
 
-    // Classify into blocks by time
-    const classifyTime=(t)=>{
-      if(!t.time)return null;
-      const h=parseInt(t.time.split(':')[0],10);
-      if(h<13)return'manana';
-      if(h<20)return'tarde';
-      return'noche';
-    };
+    // Classify into blocks by time (reusa función global)
+    const classifyTime=(t)=>classifyTimeStr(t.time);
 
-    // planDias stores manually assigned tasks per block per date
+    // planDias stores manually assigned tasks per block per date (orden posicional)
     if(!S.planDias)S.planDias={};
-    const pd=S.planDias[dateStr]||{manana:[],tarde:[],noche:[]};
+    if(!S.planDias[dateStr])S.planDias[dateStr]={manana:[],tarde:[],noche:[]};
+    const pd=S.planDias[dateStr];
     const assigned=new Set([...pd.manana,...pd.tarde,...pd.noche]);
 
     const blocks=[
@@ -1487,12 +1499,23 @@ function renderToday(){
       {key:'noche',icon:'🌙',name:'Noche',range:'desde las 20:00'},
     ];
 
-    // Auto-assign by time if not manually assigned
-    const autoAssign={manana:[],tarde:[],noche:[]};
+    // Auto-assign by time if not manually assigned: se insertan en pd[block] respetando
+    // orden cronológico entre las que tienen hora, sin tocar la posición de las que no tienen.
+    let pdChanged=false;
     allForDay.forEach(t=>{
       if(assigned.has(t.id))return;
       const blk=classifyTime(t);
-      if(blk)autoAssign[blk].push(t);
+      if(!blk)return;
+      if(!pd[blk])pd[blk]=[];
+      // Buscar posición: antes de la primera tarea-con-hora-mayor que ya esté en el array
+      let insertAt=pd[blk].length;
+      for(let i=0;i<pd[blk].length;i++){
+        const ot=S.tasks.find(x=>x.id===pd[blk][i]);
+        if(ot&&ot.time&&t.time&&ot.time>t.time){insertAt=i;break;}
+      }
+      pd[blk].splice(insertAt,0,t.id);
+      assigned.add(t.id);
+      pdChanged=true;
     });
     // Filter assigned: only include tasks that still belong to this date
     ['manana','tarde','noche'].forEach(b=>{
@@ -1504,15 +1527,14 @@ function renderToday(){
       });
     });
 
-    // Pending: no time and not assigned
+    // Pending: no time and not assigned a ningún bloque
     const pendTasks=allForDay.filter(t=>!assigned.has(t.id)&&!classifyTime(t));
+    if(pdChanged)saveData();
 
     let blocksHTML='<div class="agenda-blocks">';
     blocks.forEach(b=>{
-      const manualIds=pd[b.key]||[];
-      const manualTasks=manualIds.map(id=>S.tasks.find(t=>t.id===id)).filter(Boolean);
-      const autoTasks=autoAssign[b.key]||[];
-      const bTasks=[...manualTasks,...autoTasks.filter(t=>!manualTasks.find(m=>m.id===t.id))];
+      const blockIds=pd[b.key]||[];
+      const bTasks=blockIds.map(id=>S.tasks.find(t=>t.id===id)).filter(Boolean);
       const tasksHTML=bTasks.length?bTasks.map(t=>{
         const tDone=isDone(t);
         const isOvTask=t.date&&t.date<TODAY&&!tDone;
@@ -1546,6 +1568,9 @@ function renderToday(){
         <div class="agenda-block-hdr hdr-${b.key}">
           <span class="agenda-block-icon">${b.icon}</span>
           <span class="agenda-block-name">${b.name}</span>
+          <button class="agenda-block-add-btn" onclick="event.stopPropagation();openT(null,null,'${dateStr}','${b.key}')" title="Agregar tarea en ${b.name}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
           <span class="agenda-block-range">${b.range}</span>
         </div>
         <div class="agenda-block-tasks" 
@@ -2922,15 +2947,15 @@ window.onFabClick=()=>{
 
 // ── TASK MODAL ──
 let modalDefaultDate='';
-window.openT=(projId,colId,datePreset)=>{
-  editTId=null;mStar=false;mPrio='media';mTags=[];mSubtasks=[];mRepeatDays=[];
+window.openT=(projId,colId,datePreset,blockPreset)=>{
+  editTId=null;mStar=false;mPrio='media';mTags=[];mSubtasks=[];mRepeatDays=[];mBlock=blockPreset||'';
   modalDefaultDate=datePreset||'';
   document.getElementById('t-sheet-title').textContent='Nueva tarea';
   ['tf-t','tf-d','tf-h'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('tf-dt').value=datePreset||'';
   document.getElementById('tf-r').value='';
   document.getElementById('repeat-custom-wrap').style.display='none';
-  fillProjSel(projId);renderStatusSel(colId);renderPrioPills();renderMTags();renderDateQuick(datePreset||'');renderSubtasksModal();updStar();
+  fillProjSel(projId||S.projects[0]?.id);renderStatusSel(colId);renderPrioPills();renderMTags();renderDateQuick(datePreset||'');renderSubtasksModal();renderBlockPills();updStar();
   document.getElementById('t-overlay').style.display='flex';
   document.body.classList.add('modal-open');
   history.pushState({tf:true,modal:'task'},'');
@@ -2939,11 +2964,16 @@ window.openT=(projId,colId,datePreset)=>{
 window.openEditT=(tid)=>{
   const t=S.tasks.find(x=>x.id===tid);if(!t)return;
   editTId=tid;mStar=t.starred;mPrio=t.priority;mTags=[...(t.tags||[])];mSubtasks=[...(t.subtasks||[]).map(s=>({...s}))];mRepeatDays=[...(t.repeatDays||[])];
+  mBlock='';
+  if(t.date&&S.planDias&&S.planDias[t.date]){
+    const pd=S.planDias[t.date];
+    mBlock=['manana','tarde','noche'].find(b=>(pd[b]||[]).includes(tid))||'';
+  }
   document.getElementById('t-sheet-title').textContent='Editar tarea';
   document.getElementById('tf-t').value=t.title;document.getElementById('tf-d').value=t.description||'';
   document.getElementById('tf-dt').value=t.date||'';document.getElementById('tf-h').value=t.time||'';
   document.getElementById('tf-r').value=t.repeat||'';
-  fillProjSel(t.projectId);renderStatusSel(t.columnId);renderPrioPills();renderMTags();renderDateQuick(t.date||'');renderSubtasksModal();updStar();
+  fillProjSel(t.projectId);renderStatusSel(t.columnId);renderPrioPills();renderMTags();renderDateQuick(t.date||'');renderSubtasksModal();renderBlockPills();updStar();
   window.renderRepeatCustom();
   document.getElementById('t-overlay').style.display='flex';
   history.pushState({tf:true,modal:'task'},'');
@@ -2960,6 +2990,39 @@ function renderDateQuick(currentDate){
 }
 window.setDateQuick=(date)=>{document.getElementById('tf-dt').value=date;renderDateQuick(date);};
 window.clearDateQuick=()=>renderDateQuick(document.getElementById('tf-dt').value);
+
+// ── BLOQUES DEL DÍA (Mañana/Tarde/Noche) EN EL MODAL ──
+const BLOCK_LABELS={manana:'🌅 Mañana',tarde:'☀️ Tarde',noche:'🌙 Noche'};
+function renderBlockPills(){
+  const row=document.getElementById('block-pills');
+  if(!row)return;
+  row.innerHTML=['manana','tarde','noche'].map(b=>
+    `<button class="block-pill${mBlock===b?' active':''}" onclick="setMBlock('${b}')">${BLOCK_LABELS[b]}</button>`
+  ).join('');
+  applyTimeRange();
+}
+window.setMBlock=(b)=>{
+  mBlock=mBlock===b?'':b; // tocar de nuevo deselecciona
+  renderBlockPills();
+  // Si la hora actual no entra en el rango del bloque elegido, la limpiamos
+  const h=document.getElementById('tf-h');
+  if(mBlock&&h.value){
+    const blk=classifyTimeStr(h.value);
+    if(blk!==mBlock)h.value='';
+  }
+};
+function applyTimeRange(){
+  const h=document.getElementById('tf-h');if(!h)return;
+  if(mBlock&&BLOCK_RANGES[mBlock]){h.min=BLOCK_RANGES[mBlock].min;h.max=BLOCK_RANGES[mBlock].max;}
+  else{h.removeAttribute('min');h.removeAttribute('max');}
+}
+window.onTimeChange=()=>{
+  const h=document.getElementById('tf-h');
+  if(!h.value)return;
+  // Si el usuario pone una hora, el bloque se infiere automáticamente
+  const blk=classifyTimeStr(h.value);
+  if(blk&&blk!==mBlock){mBlock=blk;renderBlockPills();}
+};
 
 window.renderRepeatCustom=()=>{
   const val=document.getElementById('tf-r').value;
@@ -3013,7 +3076,8 @@ window.saveT=()=>{
   const title=document.getElementById('tf-t').value.trim();if(!title){document.getElementById('tf-t').focus();return;}
   const projId=document.getElementById('tf-p').value,colId=document.getElementById('tf-s').value;
   const repeatVal=document.getElementById('tf-r').value;
-  const data={title,description:document.getElementById('tf-d').value.trim(),projectId:projId,columnId:colId,date:document.getElementById('tf-dt').value,time:document.getElementById('tf-h').value,priority:mPrio,starred:mStar,tags:[...mTags],repeat:repeatVal,repeatDays:[...mRepeatDays],subtasks:[...mSubtasks]};
+  const dateVal=document.getElementById('tf-dt').value;
+  const data={title,description:document.getElementById('tf-d').value.trim(),projectId:projId,columnId:colId,date:dateVal,time:document.getElementById('tf-h').value,priority:mPrio,starred:mStar,tags:[...mTags],repeat:repeatVal,repeatDays:[...mRepeatDays],subtasks:[...mSubtasks]};
   let taskId;
   if(editTId){const t=S.tasks.find(x=>x.id===editTId);if(t)Object.assign(t,data);taskId=editTId;}
   else{const newTask={id:uid(),createdAt:Date.now(),order:S.tasks.filter(t=>t.projectId===projId&&t.columnId===colId).length,...data};S.tasks.push(newTask);taskId=newTask.id;}
@@ -3022,6 +3086,24 @@ window.saveT=()=>{
   const pinIdx=S.pinnedTasks.indexOf(taskId);
   if(mStar&&pinIdx===-1)S.pinnedTasks.push(taskId);
   else if(!mStar&&pinIdx>-1)S.pinnedTasks.splice(pinIdx,1);
+  // Asignar/mover el bloque del día (mañana/tarde/noche) si hay fecha
+  if(dateVal){
+    if(!S.planDias)S.planDias={};
+    if(!S.planDias[dateVal])S.planDias[dateVal]={manana:[],tarde:[],noche:[]};
+    const pd=S.planDias[dateVal];
+    ['manana','tarde','noche'].forEach(b=>{pd[b]=(pd[b]||[]).filter(x=>x!==taskId);});
+    if(mBlock&&pd[mBlock]){
+      const timeVal=data.time;
+      let insertAt=pd[mBlock].length;
+      if(timeVal){
+        for(let i=0;i<pd[mBlock].length;i++){
+          const ot=S.tasks.find(x=>x.id===pd[mBlock][i]);
+          if(ot&&ot.time&&ot.time>timeVal){insertAt=i;break;}
+        }
+      }
+      pd[mBlock].splice(insertAt,0,taskId);
+    }
+  }
   closeT();render();
   // Save immediately (bypass debounce) to avoid onSnapshot race condition
   if(!offlineMode&&currentUser){
