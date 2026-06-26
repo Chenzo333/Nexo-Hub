@@ -910,6 +910,7 @@ input[type=date].inp,input[type=time].inp{color-scheme:dark}
     </div>
   </div>
   <div class="sheet-foot">
+    <button class="icon-btn danger" id="t-del-btn" style="display:none" onclick="delTaskFromModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
     <button class="btn btn-ghost" onclick="closeT()">Cancelar</button>
     <button class="btn btn-primary" onclick="saveT()">Guardar</button>
   </div>
@@ -2752,6 +2753,7 @@ window.mvCol=(tid,colId,evt)=>{
   saveData();render();
 };
 window.delTask=(tid)=>{if(!confirm('¿Eliminar tarea?'))return;S.tasks=S.tasks.filter(t=>t.id!==tid);saveData();render();};
+window.delTaskFromModal=()=>{if(!editTId)return;closeT();delTask(editTId);};
 window.togglePin=async(tid)=>{
   if(!S.pinnedTasks)S.pinnedTasks=[];if(!S.focusNow)S.focusNow=[];if(!S.focusDate)S.focusDate='';
   // focusNow persists across days
@@ -2956,6 +2958,7 @@ window.openT=(projId,colId,datePreset,blockPreset)=>{
   document.getElementById('tf-r').value='';
   document.getElementById('repeat-custom-wrap').style.display='none';
   fillProjSel(projId||S.projects[0]?.id);renderStatusSel(colId);renderPrioPills();renderMTags();renderDateQuick(datePreset||'');renderSubtasksModal();renderBlockPills();updStar();
+  document.getElementById('t-del-btn').style.display='none';
   document.getElementById('t-overlay').style.display='flex';
   document.body.classList.add('modal-open');
   history.pushState({tf:true,modal:'task'},'');
@@ -2974,6 +2977,7 @@ window.openEditT=(tid)=>{
   document.getElementById('tf-dt').value=t.date||'';document.getElementById('tf-h').value=t.time||'';
   document.getElementById('tf-r').value=t.repeat||'';
   fillProjSel(t.projectId);renderStatusSel(t.columnId);renderPrioPills();renderMTags();renderDateQuick(t.date||'');renderSubtasksModal();renderBlockPills();updStar();
+  document.getElementById('t-del-btn').style.display='flex';
   window.renderRepeatCustom();
   document.getElementById('t-overlay').style.display='flex';
   history.pushState({tf:true,modal:'task'},'');
