@@ -1095,8 +1095,8 @@ function migrateState(){
   if(!S.planDias)S.planDias={};
   // Clean up old dates from planDias (keep only today and tomorrow)
   if(S.planDias){
-    const today=new Date().toISOString().slice(0,10);
-    const tom=new Date(Date.now()+86400000).toISOString().slice(0,10);
+    const today=localDateStr();
+    const tom=localDateStr(new Date(Date.now()+86400000));
     Object.keys(S.planDias).forEach(d=>{if(d!==today&&d!==tom)delete S.planDias[d];});
   }
   (S.projects||[]).forEach(p=>{
