@@ -966,7 +966,24 @@ try{await enableIndexedDbPersistence(db);}catch(e){}
 function localDateStr(d=new Date()){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const dy=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dy;}
 const TODAY=localDateStr();
 const TOMORROW=(()=>{const d=new Date();d.setDate(d.getDate()+1);return localDateStr(d);})();
-const ICONS_LIST=['📁','📈','🎵','✨','💡','🏋️','📚','🎨','🛠','🌱','💼','🎯','🧠','🌙','🚀','⚡','🎯','🏠','💰','❤️'];
+const ICONS_LIST=[
+  // Trabajo / productividad
+  '📁','💼','📈','📊','💻','🖥','⌨️','🖱','📝','📌','📎','🗂','📋','✅','🎯','⏰','📅','🗓','💡','🔍',
+  // Dinero / finanzas
+  '💰','💵','💳','🏦','📉','🪙','💎','🧾',
+  // Hogar / vida diaria
+  '🏠','🏡','🛒','🧹','🧺','🛋','🛏','🚪','🔑','🪴','🧼','🍽',
+  // Salud / bienestar
+  '🏋️','🧘','🏃','💪','🩺','😴','🥗','💊','🧠','❤️','🦷','👁',
+  // Estudio / creatividad
+  '📚','✏️','🎨','🎵','🎸','🎬','📷','🖌','🧩','🔬','🧪','🌐',
+  // Viajes / transporte
+  '✈️','🚗','🚆','🗺','🧳','⛽','🚲',
+  // Naturaleza / clima
+  '🌱','🌳','🌻','☀️','🌙','⭐','🌧','🔥','💧','🌊',
+  // Social / personal
+  '👥','💬','📞','✨','🎉','🎁','🐶','🐱','🛠','🚀','⚡','🧘‍♂️',
+];
 const PRIOS=[{v:'alta',l:'Alta / urgente',c:'var(--c-over)'},{v:'media',l:'Media / normal',c:'var(--c-mid)'},{v:'baja',l:'Baja / simple',c:'var(--text3)'}];
 const WEEKDAYS=['Lu','Ma','Mi','Ju','Vi','Sa','Do'];
 const PALETTE=[
@@ -1565,6 +1582,8 @@ function renderToday(){
         const actionBtn=tDone
           ?'<button onclick="event.stopPropagation();uncompleteTodo(\''+tid+'\',this)" style="border:none;background:none;font-size:14px;color:var(--text3);cursor:pointer;padding:2px 4px;flex-shrink:0" title="Desmarcar">↩</button>'
           :'<button onclick="event.stopPropagation();removeFromBlock(\''+tid+'\',\''+ds2+'\')" style="border:none;background:none;color:var(--text3);opacity:.4;cursor:pointer;padding:2px;display:flex;align-items:center;flex-shrink:0;font-size:14px" title="Quitar del bloque">×</button>';
+        const tProj=S.projects.find(p=>p.id===t.projectId);
+        const projIconTpl=tProj?('<span style="font-size:12px;opacity:.55;flex-shrink:0">'+tProj.icon+'</span>'):'';
         return '<div class="agenda-task'+ovCls+doneCls+'" draggable="true" data-tid="'+tid+'" data-block="'+bk+'" data-date="'+ds2+'"'+
           ' ondragstart="agendaDragStart(event,\''+tid+'\',\''+bk+'\',\''+ds2+'\')"'+
           ' ondragover="agendaDragOver(event)"'+
@@ -1575,6 +1594,7 @@ function renderToday(){
           ' ontouchend="agendaTouchEnd(event)"'+
           ' ontouchmove="agendaTouchMove(event)">'+
           checkEl+
+          projIconTpl+
           '<span class="agenda-task-title">'+esc(t.title)+'</span>'+
           timeTpl+ovLbl+
           actionBtn+
